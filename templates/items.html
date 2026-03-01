@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Items</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="background:#f5f7fb">
+
+<!-- 🔷 NAVBAR -->
+<nav class="navbar navbar-dark bg-primary">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">🔍 Lost & Found System</span>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <h2 class="text-center mb-4">Uploaded Items</h2>
+
+    {% if items %}
+    <div class="row">
+
+        {% for item in items %}
+        <div class="col-md-4 mb-4">
+
+            <div class="card shadow-sm h-100">
+
+                <img src="{{ url_for('uploaded_file', filename=item[4]) }}"
+                     class="card-img-top"
+                     style="height:220px; object-fit:cover;">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">{{ item[3] }}</h5>
+
+                    <p class="card-text">
+                        <strong>Type:</strong>
+                        {% if item[2]|lower == 'lost' %}
+                            <span class="badge bg-danger">Lost</span>
+                        {% else %}
+                            <span class="badge bg-success">Found</span>
+                        {% endif %}
+                    </p>
+
+                    {% if item[2]|lower == 'lost' %}
+                        <a href="/match_ui/{{ item[0] }}"
+                           class="btn btn-primary w-100">
+                           🔎 Find Match
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary w-100" disabled>
+                            Already Found Item
+                        </button>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </div>
+    {% else %}
+        <p class="text-center">No items found.</p>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lost & Found</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<style>
+body {
+    background: url("{{ url_for('static', filename='images/bgimage.jpg') }}");
+    background-size:cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-size: 60%;
+    
+}
+
+</style>
+<body>
+
+<div class="container">
+    <h1 style="text-align: center;">🔍 Lost & Found System</h1>
+    <p style="text-align: center;">Find your lost items easily</p>
+    <div class="boxes">
+        <img src="static/images/left.jpg" class="side-img">
+        <div class="buttons">
+            <a href="/register">register</a>
+            <a href="/upload">Report Item</a>
+            <a href="/items">View Items</a>
+        </div>
+        <img src="static/images/right.jpg" class="side-img">
+    </div>
+</div>
+
+</body>
+</html>
