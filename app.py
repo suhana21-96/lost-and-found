@@ -46,19 +46,16 @@ def init_db():
 init_db()
 
 # ------------------ IMAGE MATCHING ------------------
-
-def compare_images(img1_name, img2_name):
-    img1_path = os.path.join(UPLOAD_FOLDER, img1_name)
-    img2_path = os.path.join(UPLOAD_FOLDER, img2_name)
+def compare_images(img1_path, img2_path):
+    import cv2
 
     img1 = cv2.imread(img1_path, 0)
     img2 = cv2.imread(img2_path, 0)
 
     if img1 is None or img2 is None:
-        print("⚠️ Image read failed")
         return 0
 
-    orb = cv2.ORB_create(nfeatures=2000)
+    orb = cv2.ORB_create()
 
     kp1, des1 = orb.detectAndCompute(img1, None)
     kp2, des2 = orb.detectAndCompute(img2, None)
@@ -66,10 +63,16 @@ def compare_images(img1_name, img2_name):
     if des1 is None or des2 is None:
         return 0
 
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-    matches = bf.match(des1, des2)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+    matches = bf.knnMatch(des1, des2, k=2)
 
-    return len(matches)
+    good_matches = []
+    for m, n in matches:
+        if m.distance < 0.75 * n.distance:
+            good_matches.append(m)
+
+    return len(good_matches)
+
 # ------------------ REGISTER ------------------
 
 @app.route("/register", methods=["GET", "POST"])
@@ -188,7 +191,7 @@ def find_match(item_id):
     for item in all_items:
         score = compare_images(base_img, item[4])
         print("Comparing", base_img, "vs", item[4], "Score:", score)
-        if score > max_score:
+        if score > max_score and score>15:
             max_score = score
             best_match = item
 
