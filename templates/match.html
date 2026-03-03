@@ -45,20 +45,17 @@ function findMatch() {
     .then(res => res.json())
     .then(data => {
 
-        if(data.status === "found") {
-
-            document.getElementById("result").innerHTML =
-                "✅ Match Found: " + data.title;
-
-            document.getElementById("matchImage").innerHTML =
-                `<img src="/uploads/${data.image}" width="200" class="rounded shadow">`;
-
+        if (data.status === "found") {
+            document.getElementById("result").innerHTML = `
+                <h3 style="color:green;">✅ Match Found!</h3>
+                <p><b>Item:</b> ${data.title}</p>
+                <p><b>Score:</b> ${data.score}</p>
+                <img src="/uploads/${data.image}" width="220"
+                     style="border-radius:10px; margin-top:10px;">
+            `;
         } else {
-
             document.getElementById("result").innerHTML =
-                "❌ No match found";
-
-            document.getElementById("matchImage").innerHTML = "";
+                "<h3 style='color:red;'>❌ No match found</h3>";
         }
     });
 }

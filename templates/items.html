@@ -2,14 +2,44 @@
 <html>
 <head>
     <title>View Items</title>
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f5f7fb;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card-img-top {
+            height: 220px;
+            object-fit: cover;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .match-btn {
+            border-radius: 10px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 
-<body style="background:#f5f7fb">
+<body>
 
-<!-- 🔷 NAVBAR -->
+<!-- Navbar -->
 <nav class="navbar navbar-dark bg-primary">
     <div class="container-fluid">
         <span class="navbar-brand mb-0 h1">🔍 Lost & Found System</span>
@@ -28,15 +58,17 @@
 
             <div class="card shadow-sm h-100">
 
+                <!-- Image -->
                 <img src="{{ url_for('uploaded_file', filename=item[4]) }}"
-                     class="card-img-top"
-                     style="height:220px; object-fit:cover;">
+                     class="card-img-top">
 
-                <div class="card-body">
+                <div class="card-body text-center">
 
+                    <!-- Title -->
                     <h5 class="card-title">{{ item[3] }}</h5>
 
-                    <p class="card-text">
+                    <!-- Type Badge -->
+                    <p>
                         <strong>Type:</strong>
                         {% if item[2]|lower == 'lost' %}
                             <span class="badge bg-danger">Lost</span>
@@ -45,15 +77,12 @@
                         {% endif %}
                     </p>
 
+                    <!-- ✅ ONLY for LOST (no else block) -->
                     {% if item[2]|lower == 'lost' %}
                         <a href="/match_ui/{{ item[0] }}"
-                           class="btn btn-primary w-100">
+                           class="btn btn-primary w-100 match-btn">
                            🔎 Find Match
                         </a>
-                    {% else %}
-                        <button class="btn btn-secondary w-100" disabled>
-                            Already Found Item
-                        </button>
                     {% endif %}
 
                 </div>

@@ -2,8 +2,13 @@ from flask import Flask, render_template, request, jsonify, redirect, send_from_
 import sqlite3
 import os
 import cv2
-
+import smtplib
+from email.mime.text import MIMEText
 app = Flask(__name__)
+# ------------------ EMAIL CONFIG ------------------
+
+EMAIL_ADDRESS = "suhanaqueen9@gmail.com"
+EMAIL_PASSWORD = "kpwphvptvgjkanji"   # app password (NOT gmail password)
 
 # ------------------ PATH SETTINGS ------------------
 
@@ -26,7 +31,9 @@ def init_db():
     CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT,
-        password TEXT
+        password TEXT,
+        email TEXT,
+        phone TEXT
     )
     """)
 
@@ -44,18 +51,50 @@ def init_db():
     conn.close()
 
 init_db()
+#notification
+def send_notification(lost_user, found_user, item_title):
+
+    subject = "🔔 Lost & Found Match Found!"
+    body = f"""
+Good news!
+
+Your item "{item_title}" has a potential match.
+
+Please login to the Lost & Found system to contact each other.
+"""
+
+    def send_mail(to_email):
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_ADDRESS
+        msg["To"] = to_email
+
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+                server.send_message(msg)
+            print(f"✅ Email sent to {to_email}")
+        except Exception as e:
+            print("❌ Email failed:", e)
+
+    # send to both users
+    send_mail(lost_user[3])   # email column
+    send_mail(found_user[3])
 
 # ------------------ IMAGE MATCHING ------------------
-def compare_images(img1_path, img2_path):
-    import cv2
+
+def compare_images(img1_name, img2_name):
+    img1_path = os.path.join(UPLOAD_FOLDER, img1_name)
+    img2_path = os.path.join(UPLOAD_FOLDER, img2_name)
 
     img1 = cv2.imread(img1_path, 0)
     img2 = cv2.imread(img2_path, 0)
 
     if img1 is None or img2 is None:
+        print("⚠️ Image read failed")
         return 0
 
-    orb = cv2.ORB_create()
+    orb = cv2.ORB_create(nfeatures=2000)
 
     kp1, des1 = orb.detectAndCompute(img1, None)
     kp2, des2 = orb.detectAndCompute(img2, None)
@@ -63,16 +102,10 @@ def compare_images(img1_path, img2_path):
     if des1 is None or des2 is None:
         return 0
 
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
-    matches = bf.knnMatch(des1, des2, k=2)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1, des2)
 
-    good_matches = []
-    for m, n in matches:
-        if m.distance < 0.75 * n.distance:
-            good_matches.append(m)
-
-    return len(good_matches)
-
+    return len(matches)
 # ------------------ REGISTER ------------------
 
 @app.route("/register", methods=["GET", "POST"])
@@ -81,13 +114,15 @@ def register_page():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        email = request.form["email"]
+        phone = request.form["phone"]
 
         conn = sqlite3.connect(DB)
         c = conn.cursor()
 
         c.execute(
-            "INSERT INTO users(username,password) VALUES(?,?)",
-            (username, password)
+            "INSERT INTO users(username,password,email,phone) VALUES(?,?,?,?)",
+            (username, password, email, phone)
         )
 
         conn.commit()
@@ -190,13 +225,43 @@ def find_match(item_id):
 
     for item in all_items:
         score = compare_images(base_img, item[4])
-        print("Comparing", base_img, "vs", item[4], "Score:", score)
-        if score > max_score and score>15:
+        print("Comparing:", base_img, "vs", item[4], "Score:", score)
+
+        if score > max_score:
             max_score = score
             best_match = item
 
     conn.close()
 
+    THRESHOLD = 300
+    print("FINAL MAX SCORE:", max_score)
+
+    if best_match and max_score >= THRESHOLD:
+
+        # 🔔 fetch users
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+
+        c.execute("SELECT * FROM users WHERE id=?", (base_item[1],))
+        lost_user = c.fetchone()
+
+        c.execute("SELECT * FROM users WHERE id=?", (best_match[1],))
+        found_user = c.fetchone()
+
+        conn.close()
+
+        # 🔔 enable later if needed
+        send_notification(lost_user, found_user, base_item[3])
+
+        return jsonify({
+            "status": "found",
+            "match_id": best_match[0],
+            "title": best_match[3],
+            "score": max_score,
+            "image":best_match[4]
+        })
+
+    return jsonify({"status": "not_found"})
     # ---------- THRESHOLD ----------
     print("DEBUG max_score:", max_score)
     print("DEBUG best_match:", best_match)
